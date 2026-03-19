@@ -7,5 +7,16 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  backend:
+    build: ./backend
+    container_name: chat-backend
+    ports:
+      - "5005:5005"
+    environment:
+      PORT: 5005
+      MONGO_URI: mongodb://mongo:27017/chatapp
+    depends_on:
+      - mongo
+
 volumes:
   mongo_data:
