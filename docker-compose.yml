@@ -18,5 +18,13 @@ services:
     depends_on:
       - mongo
 
+  frontend:
+    build: ./frontend
+    container_name: chat-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
 volumes:
   mongo_data:
