@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.io Test</title>
+    <style>
+       
+        body { font-family: sans-serif; padding: 20px; }
+        #nachrichten { list-style-type: none; padding: 0; border: 1px solid #ccc; height: 200px; overflow-y: scroll; margin-bottom: 10px; }
+        #nachrichten li { padding: 5px 10px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>Socket.io VERBINDUNGSTEST VON PIRAAAANHAAAAA :DDDDDDDDD</h1>
+    <p id="status">Ist am verbinden!!Wait plssss</p>
+
+    
+    <ul id="nachrichten"></ul>
+    <input id="input" autocomplete="off" placeholder="Schreib was..." /><button onclick="sendeNachricht()">Senden</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io(); 
+        const statusText = document.getElementById('status');
+        const nachrichtenListe = document.getElementById('nachrichten');
+        const inputFeld = document.getElementById('input');
+
+        socket.on('connect', () => {
+            statusText.innerText = "Verbunden!!!!!!!!!!!!!.";
+            statusText.style.color = "green";
+            console.log("Verbunden mit ID:", socket.id);
+        });
+
+        function sendeNachricht() {
+            const msg = inputFeld.value;
+            if (msg) {
+                socket.emit('chat_nachricht', msg); 
+                inputFeld.value = ''; 
+            }
+        }
+
+        socket.on('chat_nachricht', (msg) => {
+            const item = document.createElement('li');
+            item.textContent = msg;
+            nachrichtenListe.appendChild(item);
+        });
+    </script>
+</body>
+</html>
