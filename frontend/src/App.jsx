@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5004", {
+const socket = io("http://localhost:5005", {
   transports: ["websocket", "polling"],
 });
 
 function App() {
+  const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [connected, setConnected] = useState(false);
@@ -39,7 +40,11 @@ function App() {
     e.preventDefault();
     if (!message.trim() || !connected) return;
 
-    socket.emit("chat_nachricht", message);
+    socket.emit("chat_nachricht", {
+      username: username.trim() || "Anonym",
+      text: message,
+    });
+
     setMessage("");
   };
 
@@ -48,9 +53,15 @@ function App() {
       <h1>Chat App</h1>
 
       <p>
-        Status:{" "}
-        <strong>{connected ? "Verbunden" : "Nicht verbunden"}</strong>
+        Status: <strong>{connected ? "Verbunden" : "Nicht verbunden"}</strong>
       </p>
+
+      <input
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Dein Benutzername"
+        style={{ marginBottom: "10px", display: "block" }}
+      />
 
       <ul>
         {messages.map((msg, index) => (
@@ -64,7 +75,7 @@ function App() {
         <input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Nachricht"
+          placeholder="Nachricht..."
         />
         <button type="submit">Senden</button>
       </form>

@@ -41,13 +41,13 @@ io.on("connection", async (socket) => {
     console.log("Nachricht ist angekommen:", msg);
 
     const savedMessage = await Message.create({
-      username: "Anonym",
-      text: msg
+      username: msg.username || "Anonym",
+      text: msg.text
     });
 
     io.emit("chat_nachricht", savedMessage);
   });
-});
+}); 
 
 server.listen(PORT, () => {
   console.log(`Server läuft auf http://localhost:${PORT}`);
