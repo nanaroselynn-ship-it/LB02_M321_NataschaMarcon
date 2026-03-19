@@ -11,9 +11,9 @@ services:
     build: ./backend
     container_name: chat-backend
     ports:
-      - "5005:5005"
+      - "5014:5014"
     environment:
-      PORT: 5005
+      PORT: 5014
       MONGO_URI: mongodb://mongo:27017/chatapp
     depends_on:
       - mongo
