@@ -1,5 +1,6 @@
 const path = require("path");
-let users = []; 
+let users = [];
+
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const express = require("express");
@@ -19,14 +20,14 @@ mongoose.connect(dbURL)
   .then(() => console.log("MongoDB ist verbunden Hallelujah!"))
   .catch(err => {
     console.error("MongoDB Fehler:", err.message);
-    console.log("DEBUG: Wurde die URL geladen?", dbURL ? "JA" : "NEIN (Prüfe Variablen-Name in .env)");
+    console.log("DEBUG: Wurde die URL geladen?", dbURL ? "JA" : "NEIN");
   });
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -36,6 +37,17 @@ io.on("connection", async (socket) => {
 
   const oldMessages = await Message.find().sort({ createdAt: 1 });
   socket.emit("oldMessages", oldMessages);
+
+  socket.on("join", (username) => {
+    socket.username = username || "Anonym";
+
+    if (!users.includes(socket.username)) {
+      users.push(socket.username);
+    }
+
+    io.emit("user_list", users);
+    console.log("Online Benutzer:", users);
+  });
 
   socket.on("chat_nachricht", async (msg) => {
     console.log("Nachricht ist angekommen:", msg);
@@ -47,7 +59,13 @@ io.on("connection", async (socket) => {
 
     io.emit("chat_nachricht", savedMessage);
   });
-}); 
+
+  socket.on("disconnect", () => {
+    users = users.filter((u) => u !== socket.username);
+    io.emit("user_list", users);
+    console.log("Benutzer getrennt, online:", users);
+  });
+});
 
 server.listen(PORT, () => {
   console.log(`Server läuft auf http://localhost:${PORT}`);
