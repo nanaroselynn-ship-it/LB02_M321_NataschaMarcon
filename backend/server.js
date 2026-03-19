@@ -10,7 +10,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const Message = require("./models/Message");
-
+const User = require("./models/User");
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -38,16 +38,28 @@ io.on("connection", async (socket) => {
   const oldMessages = await Message.find().sort({ createdAt: 1 });
   socket.emit("oldMessages", oldMessages);
 
-  socket.on("join", (username) => {
-    socket.username = username || "Anonym";
+  socket.on("join", async (username) => {
+  socket.username = username || "Anonym";
 
-    if (!users.includes(socket.username)) {
-      users.push(socket.username);
+  try {
+   
+    let existingUser = await User.findOne({ username: socket.username });
+
+    if (!existingUser) {
+      await User.create({ username: socket.username });
+      console.log("User gespeichert:", socket.username);
     }
+  } catch (err) {
+    console.error("Fehler beim Speichern des Users:", err.message);
+  }
 
-    io.emit("user_list", users);
-    console.log("Online Benutzer:", users);
-  });
+  if (!users.includes(socket.username)) {
+    users.push(socket.username);
+  }
+
+  io.emit("user_list", users);
+  console.log("Online Benutzer:", users);
+});
 
   socket.on("chat_nachricht", async (msg) => {
     console.log("Nachricht ist angekommen:", msg);
