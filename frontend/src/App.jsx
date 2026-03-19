@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5005", {
+const socket = io("http://localhost:5007", {
   transports: ["websocket", "polling"],
 });
 
 function App() {
   const [username, setUsername] = useState("");
+  const [currentUser, setCurrentUser] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -28,20 +30,35 @@ function App() {
       setMessages((prev) => [...prev, msg]);
     });
 
+    socket.on("user_list", (userList) => {
+      setUsers(userList);
+    });
+
     return () => {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("oldMessages");
       socket.off("chat_nachricht");
+      socket.off("user_list");
     };
   }, []);
+
+  const joinChat = () => {
+    if (!username.trim() || !connected) return;
+
+    const cleanName = username.trim();
+    setCurrentUser(cleanName);
+    socket.emit("join", cleanName);
+  };
 
   const sendMessage = (e) => {
     e.preventDefault();
     if (!message.trim() || !connected) return;
 
+    const activeUser = currentUser || "Anonym";
+
     socket.emit("chat_nachricht", {
-      username: username.trim() || "Anonym",
+      username: activeUser,
       text: message,
     });
 
@@ -56,13 +73,29 @@ function App() {
         Status: <strong>{connected ? "Verbunden" : "Nicht verbunden"}</strong>
       </p>
 
-      <input
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Dein Benutzername"
-        style={{ marginBottom: "10px", display: "block" }}
-      />
+      <div style={{ marginBottom: "10px" }}>
+        <input
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Dein Benutzername"
+        />
+        <button onClick={joinChat} style={{ marginLeft: "8px" }}>
+          Name setzen
+        </button>
+      </div>
 
+      <p>
+        Aktueller Benutzer: <strong>{currentUser || "Noch nicht gesetzt"}</strong>
+      </p>
+
+      <h3>Online Benutzer:</h3>
+      <ul>
+        {users.map((user, index) => (
+          <li key={index}>{user}</li>
+        ))}
+      </ul>
+
+      <h3>Nachrichten:</h3>
       <ul>
         {messages.map((msg, index) => (
           <li key={index}>
