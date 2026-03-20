@@ -1,39 +1,47 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
+// create a socket connection to the server via ngingx proxy
 const socket = io("/", {
   transports: ["websocket", "polling"],
 });
 
 function App() {
+  // state for username input
   const [username, setUsername] = useState("");
+  // currenty active user after joining
   const [currentUser, setCurrentUser] = useState("");
+  // message input field
   const [message, setMessage] = useState("");
+  // all chat messages
   const [messages, setMessages] = useState([]);
+  // list of currently online users
   const [users, setUsers] = useState([]);
+  // connection status to the server
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    // triggered when socket connects
     socket.on("connect", () => {
       setConnected(true);
     });
-
+    // triggered when socket is disconnected
     socket.on("disconnect", () => {
       setConnected(false);
     });
-
+     // receive previously stored messages from server
     socket.on("oldMessages", (msgs) => {
       setMessages(msgs);
     });
-
+     // receive new messages from server in real time
     socket.on("chat_nachricht", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
-
+     // receive updated list of online users
     socket.on("user_list", (userList) => {
       setUsers(userList);
     });
-
+     // cleanup remove all listeners when component unmounts
     return () => {
       socket.off("connect");
       socket.off("disconnect");
@@ -42,26 +50,30 @@ function App() {
       socket.off("user_list");
     };
   }, []);
-
+    // function to join the chat with a username
   const joinChat = () => {
+    // prevent joining if username is empty or not connected
     if (!username.trim() || !connected) return;
 
     const cleanName = username.trim();
+    // set current user locally
     setCurrentUser(cleanName);
+    // notify backend that user join
     socket.emit("join", cleanName);
   };
-
+    // function to send a message
   const sendMessage = (e) => {
     e.preventDefault();
+    // prevent sending empty messages of if not connected
     if (!message.trim() || !connected) return;
-
+     // user current user or fallback to anonym
     const activeUser = currentUser || "Anonym";
-
+     // send message to backend
     socket.emit("chat_nachricht", {
       username: activeUser,
       text: message,
     });
-
+    // clear input field
     setMessage("");
   };
 

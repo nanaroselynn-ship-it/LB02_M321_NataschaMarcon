@@ -1,30 +1,31 @@
 services:
-  mongo:
+
+  mongo: # mongoDB database service
     image: mongo:7
     container_name: chat-mongo
     ports:
-      - "27017:27017"
+      - "27017:27017" # map local port to container port
     volumes:
-      - mongo_data:/data/db
+      - mongo_data:/data/db # persist database data
 
-  backend:
+  backend: # node.js backend (API + Socket.IO)
     build: ./backend
     container_name: chat-backend
     ports:
-      - "5014:5014"
+      - "5014:5014" # backend runs on port 5014
     environment:
-      PORT: 5014
-      MONGO_URI: mongodb://mongo:27017/chatapp
+      PORT: 5014 # set server port inside container
+      MONGO_URI: mongodb://mongo:27017/chatapp # connect to Mongo container
     depends_on:
-      - mongo
+      - mongo # start only after MongoDB is ready
 
-  frontend:
+  frontend: # react frontend served via Nginx
     build: ./frontend
     container_name: chat-frontend
     ports:
-      - "8080:80"
+      - "8080:80" # access frontend via localhost:8080
     depends_on:
-      - backend
+      - backend # nnsure backend is started first
 
 volumes:
-  mongo_data:
+  mongo_data: # named volume for persistent Mongodb storage
